@@ -141,6 +141,9 @@ class DLataset(tf.data.Dataset):
             num_parallel_reads (int, optional): The number of tfrecord files to read in parallel. Defaults to AUTOTUNE. This
                 can use an excessive amount of memory if reading from cloud storage; decrease if necessary.
         """
+        # Respect the builder's disable_shuffling flag
+        if hasattr(builder.info, 'disable_shuffling') and builder.info.disable_shuffling:
+            shuffle = False
         dataset = _wrap(builder.as_dataset, False)(
             split=split,
             shuffle_files=shuffle,
@@ -148,7 +151,8 @@ class DLataset(tf.data.Dataset):
             read_config=tfds.ReadConfig(
                 skip_prefetch=True,
                 num_parallel_calls_for_interleave_files=num_parallel_reads,
-                interleave_cycle_length=num_parallel_reads,
+                # interleave_cycle_length=num_parallel_reads,
+                interleave_cycle_length=num_parallel_reads if shuffle else 1,
             ),
         )._apply_options()
 
